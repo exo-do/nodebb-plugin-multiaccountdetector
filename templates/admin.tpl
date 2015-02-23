@@ -4,7 +4,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row" style="padding:10px">
    <p><h2>Detecciones:  (<a href="#" onclick="deleteMultiAccountMessages()">Borrar Todas</a>) </h2> </p>
    <div id="multiaccountMessages"></div>   
 </div>
@@ -18,13 +18,19 @@
         for(var i=0;i<data.members.length;i++)
         {
             var actualInfo = JSON.parse(data.members[i]);
+            var actionColor = "";
+            if( actualInfo[4] )
+                actionColor = "red";
+            else
+                actionColor = "black";
+
             if( actualInfo[2] )
             {
-                messages += "<b>Los usuarios <a href='/user/"+actualInfo[0]+"' target='_blank'>"+actualInfo[0]+"</a> y <a href='/user/"+actualInfo[1]+"' target='_blank'>"+actualInfo[1]+"</a> usan la misma IP ("+actualInfo[2]+") - "+humanReadableTime(actualInfo[3])+"</b><br>";
+                messages += "<b>Los usuarios <a href='/user/"+actualInfo[0]+"' target='_blank'>"+actualInfo[0]+"</a> y <a href='/user/"+actualInfo[1]+"' target='_blank'>"+actualInfo[1]+"</a> usan la misma IP ("+actualInfo[2]+") - "+humanReadableTime(actualInfo[3])+" [<font color='"+actionColor+"'>Accion Tomada: "+actualInfo[4]+"</font>]</b><br>";
             }
             else
             {
-                messages += "<b>Los usuarios <a href='/user/"+actualInfo[0]+"' target='_blank'>"+actualInfo[0]+"</a> y <a href='/user/"+actualInfo[1]+"' target='_blank'>"+actualInfo[1]+"</a> usan el mismo navegador - "+humanReadableTime(actualInfo[3])+"</b><br>";
+                messages += "<b>Los usuarios <a href='/user/"+actualInfo[0]+"' target='_blank'>"+actualInfo[0]+"</a> y <a href='/user/"+actualInfo[1]+"' target='_blank'>"+actualInfo[1]+"</a> usan el mismo navegador - "+humanReadableTime(actualInfo[3])+" [<font color='"+actionColor+"'>Accion Tomada: "+actualInfo[4]+"</font>]</b><br>";
             }
         }
         $("#multiaccountMessages").html(messages);

@@ -1,7 +1,7 @@
 {
 	"id": "nodebb-plugin-multiaccountdetector",
 	"name": "MultiAccount Detector",
-	"description": "This plugin allows to see what users use the same ip and browser, so you can detect multiaccounts",
+	"description": "This plugin allows to see what users use the same ip and browser, so you can detect multiaccounts. It autoban to user with the same IP than other banned users.",
 	"url": "https://github.com/segura2010/nodebb-plugin-multiaccountdetector",
 	"library": "./library.js",
 
