@@ -40,27 +40,44 @@ var multiAccountDetector = {};
         // Obtenemos y guardamos los usuarios que han usado esa ip
         multiAccountDetector.ips = ips;
         multiAccountDetector.loggedUser = data;
-        multiAccountDetector.ipsLoop(0); // Recorremos los usuarios con igual ip
+        if( ips.length > 2 )  // Solamente registro multicuenta si hay mas de dos user con la misma IP
+          multiAccountDetector.ipsLoopLogin(0); // Recorremos los usuarios con igual ip
       });
     });
   }
 
 
-  multiAccountDetector.ipsLoop = function(i)
+  multiAccountDetector.ipsLoopLogin = function(i)
   {
     if(i < multiAccountDetector.ips.length)
     {
       if( multiAccountDetector.loggedUser != multiAccountDetector.ips[i] )
       { // Si no tienen el mismo id, es que no son el mismo usuario -> MULTICUENTA
-        User.getUserField(multiAccountDetector.loggedUser, 'username', function(err, username1){
-          User.getUserField(multiAccountDetector.ips[i], 'username', function(err, username2){
-            // Insertamos un array [username1, username2, ip, tiempo]
-            var message = '["'+username1+'","'+username2+'","'+multiAccountDetector.ip+'","'+Date.now()+'"]';
-            db.setAdd('multiaccount', message);
+        User.getUserData(multiAccountDetector.loggedUser, function(err, user1){
+          User.getUserData(multiAccountDetector.ips[i], function(err, user2){
+            // Insertamos un array [username1, username2, ip, tiempo, accionTomada]
+            var message = "";
+            //console.log(user1);
+            if( user2.banned )
+            {
+              User.isAdministrator(user1.uid, function(err, admin){
+                if(!admin)
+                {
+                  message = '["'+user1.username+'","'+user2.username+'","'+multiAccountDetector.ip+'","'+Date.now()+'", "banned"]';
+                  User.setUserField(user1.uid, "banned", 1);
+                  db.setAdd('multiaccount', message);
+                }
+              });
+            }
+            else
+            {
+              message = '["'+user1.username+'","'+user2.username+'","'+multiAccountDetector.ip+'","'+Date.now()+'",null]';
+              db.setAdd('multiaccount', message);
+            }
           });
         });
       }
-      multiAccountDetector.ipsLoop(i+1); // Recorremos el siguiente
+      multiAccountDetector.ipsLoopLogin(i+1); // Recorremos el siguiente
     }
   }
 
@@ -95,8 +112,8 @@ var multiAccountDetector = {};
     // Deteccion de multicuenta por cookie, me viene por sockets
     User.getUserField(data.user, 'username', function(err, username1){
       User.getUserField(data.user2, 'username', function(err, username2){
-        // Insertamos un array [username1, username2, ip, tiempo]
-        var message = '["'+username1+'","'+username2+'",null,"'+Date.now()+'"]';
+        // Insertamos un array [username1, username2, ip, tiempo, accion]
+        var message = '["'+username1+'","'+username2+'",null,"'+Date.now()+'", null]';
         db.setAdd('multiaccount', message);
       });
     });
