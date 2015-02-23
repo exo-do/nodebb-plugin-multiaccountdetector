@@ -93,10 +93,13 @@ var multiAccountDetector = {};
   SocketPlugins.multiAccountAccessDetected = function (socket, data, callback) {
     //console.log(data);
     // Deteccion de multicuenta por cookie, me viene por sockets
-    data.user = data.user.replace(/[\'\"\>\<]/g, ""); // Limpia para evitar XSS etc..
-    data.user2 = data.user2.replace(/[\'\"\>\<]/g, "");
-    var message = '["'+data.user+'","'+data.user2+'",null,"'+Date.now()+'"]';
-    db.setAdd('multiaccount', message);
+    User.getUserField(data.user, 'username', function(err, username1){
+      User.getUserField(data.user2, 'username', function(err, username2){
+        // Insertamos un array [username1, username2, ip, tiempo]
+        var message = '["'+username1+'","'+username2+'",null,"'+Date.now()+'"]';
+        db.setAdd('multiaccount', message);
+      });
+    });
   };
 
 module.exports = multiAccountDetector;
