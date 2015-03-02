@@ -33,52 +33,49 @@ var multiAccountDetector = {};
       // Obtenemos las ips del usuario, concretamente la ultima que esta usando
       multiAccountDetector.ip = ips[0].ip;
       
-      db.getSortedSetRevRange('ip:'+ips[0].ip+':uid', 0, 10, function(err, ips) {
+      db.getSortedSetRevRange('ip:'+ips[0].ip+':uid', 0, 10, function(err, users) {
         //console.log('Resultados con igual IP:');
         //console.log(err);
         //console.log(ips);
         // Obtenemos y guardamos los usuarios que han usado esa ip
-        multiAccountDetector.ips = ips;
-        multiAccountDetector.loggedUser = data;
-        if( ips.length > 2 )  // Solamente registro multicuenta si hay mas de dos user con la misma IP
-          multiAccountDetector.ipsLoopLogin(0); // Recorremos los usuarios con igual ip
+        User.getUsersData(users, function(err, usData){
+          var notBanned = 0;
+          var sameUsers = "0";
+          var message = "";
+          for(var i=0;i<usData.length;i++)
+          {
+            if(!usData[i].banned)
+            { // Compruebo el numero de multicuentas activas, pues solo permito 2
+              notBanned++;
+            }
+            sameUsers = sameUsers + "," + usData[i].username;
+          }
+
+          if(notBanned > 2)
+          { // Si tengo mas de dos cuentas con la misma ip y no baneadas
+            // Baneo a la actual (si no es admin)
+            User.isAdministrator(data, function(err, admin){
+              if(!admin)
+              {
+                User.ban(data);
+                message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", "banned"]';
+                db.setAdd('multiaccount', message);
+              }
+              else
+              {
+                message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
+                db.setAdd('multiaccount', message);
+              }
+            });
+          }
+          else
+          {
+            message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
+            db.setAdd('multiaccount', message);
+          }
+        });
       });
     });
-  }
-
-
-  multiAccountDetector.ipsLoopLogin = function(i)
-  {
-    if(i < multiAccountDetector.ips.length)
-    {
-      if( multiAccountDetector.loggedUser != multiAccountDetector.ips[i] )
-      { // Si no tienen el mismo id, es que no son el mismo usuario -> MULTICUENTA
-        User.getUserData(multiAccountDetector.loggedUser, function(err, user1){
-          User.getUserData(multiAccountDetector.ips[i], function(err, user2){
-            // Insertamos un array [username1, username2, ip, tiempo, accionTomada]
-            var message = "";
-            //console.log(user1);
-            if( user2.banned )
-            {
-              User.isAdministrator(user1.uid, function(err, admin){
-                if(!admin)
-                {
-                  message = '["'+user1.username+'","'+user2.username+'","'+multiAccountDetector.ip+'","'+Date.now()+'", "banned"]';
-                  User.setUserField(user1.uid, "banned", 1);
-                  db.setAdd('multiaccount', message);
-                }
-              });
-            }
-            else
-            {
-              message = '["'+user1.username+'","'+user2.username+'","'+multiAccountDetector.ip+'","'+Date.now()+'",null]';
-              db.setAdd('multiaccount', message);
-            }
-          });
-        });
-      }
-      multiAccountDetector.ipsLoopLogin(i+1); // Recorremos el siguiente
-    }
   }
 
   multiAccountDetector.addNavigation = function(custom_header, callback) {
