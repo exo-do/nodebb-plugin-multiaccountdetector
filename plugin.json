@@ -17,5 +17,6 @@
 	"scripts": [
 		"public/js/sockets.js"
 	],
-  "templates": "./templates"
+  "templates": "./templates",
+  "minver": "0.7.0"
 }

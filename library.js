@@ -13,13 +13,13 @@ var multiAccountDetector = {};
   multiAccountDetector.init = function(params, callback) {
     var middleware = params.middleware,
     controllers = params.controllers;
-    controllers.getErrorPage = function (req, res, next) {
-      //Renderiza la plantilla topic-error en el futuro enlace del foro //servidor.com/topicerror
+    controllers.getMultiAccount = function (req, res, next) {
+      // Renderiza la plantilla
       res.render('admin', {});
     };
     //Creamos las direcciones para poder ver los registros
-    params.router.get('/admin/multiaccount',middleware.buildHeader, controllers.getErrorPage);
-    params.router.get('/api/admin/multiaccount', controllers.getErrorPage);
+    params.router.get('/admin/multiaccount',middleware.buildHeader, controllers.getMultiAccount);
+    params.router.get('/api/admin/multiaccount', controllers.getMultiAccount);
     callback();
   };
 
