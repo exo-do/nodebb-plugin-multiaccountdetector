@@ -38,42 +38,45 @@ var multiAccountDetector = {};
         //console.log(err);
         //console.log(ips);
         // Obtenemos y guardamos los usuarios que han usado esa ip
-        User.getUsersData(users, function(err, usData){
-          var notBanned = 0;
-          var sameUsers = "0";
-          var message = "";
-          for(var i=0;i<usData.length;i++)
-          {
-            if(!usData[i].banned)
-            { // Compruebo el numero de multicuentas activas, pues solo permito 2
-              notBanned++;
+        if(users && users.length > 1)
+        { // solo si hay mas de un usuario con la misma IP 
+          User.getUsersData(users, function(err, usData){
+            var notBanned = 0;
+            var sameUsers = "0";
+            var message = "";
+            for(var i=0;i<usData.length;i++)
+            {
+              if(!usData[i].banned)
+              { // Compruebo el numero de multicuentas activas, pues solo permito 2
+                notBanned++;
+              }
+              sameUsers = sameUsers + "," + usData[i].username;
             }
-            sameUsers = sameUsers + "," + usData[i].username;
-          }
 
-          if(notBanned > 2)
-          { // Si tengo mas de dos cuentas con la misma ip y no baneadas
-            // Baneo a la actual (si no es admin)
-            User.isAdministrator(data, function(err, admin){
-              if(!admin)
-              {
-                User.ban(data);
-                message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", "banned"]';
-                db.setAdd('multiaccount', message);
-              }
-              else
-              {
-                message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
-                db.setAdd('multiaccount', message);
-              }
-            });
-          }
-          else
-          {
-            message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
-            db.setAdd('multiaccount', message);
-          }
-        });
+            if(notBanned > 2)
+            { // Si tengo mas de dos cuentas con la misma ip y no baneadas
+              // Baneo a la actual (si no es admin)
+              User.isAdministrator(data, function(err, admin){
+                if(!admin)
+                {
+                  User.ban(data);
+                  message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", "banned"]';
+                  db.setAdd('multiaccount', message);
+                }
+                else
+                {
+                  message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
+                  db.setAdd('multiaccount', message);
+                }
+              });
+            }
+            else
+            {
+              message = '["'+usData[0].username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
+              db.setAdd('multiaccount', message);
+            }
+          });
+        }
       });
     });
   }
@@ -87,6 +90,12 @@ var multiAccountDetector = {};
     });
 
     callback(null, custom_header);
+  }
+
+  multiAccountDetector.getRegister = function(regData, callback)
+  {
+    // console.log(regData.req);
+    callback(null, regData);
   }
 
 

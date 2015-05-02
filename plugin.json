@@ -12,7 +12,8 @@
 		{
 			"hook": "action:user.loggedIn", "method": "getAuth"
 		},
-		{ "hook": "filter:admin.header.build", "method": "addNavigation", "callbacked": true }
+		{ "hook": "filter:admin.header.build", "method": "addNavigation", "callbacked": true },
+		{ "hook": "filter:register.check", "method": "getRegister", "callbacked": true }
 	],
 	"scripts": [
 		"public/js/sockets.js"
