@@ -23,6 +23,51 @@ var multiAccountDetector = {};
     callback();
   };
 
+  multiAccountDetector.getRegister = function(data, callback)
+  {
+    //console.log('Data: ');
+    //console.log(data);
+
+    var ip = data.res.req.ip;
+      
+    db.getSortedSetRevRange('ip:'+ip+':uid', 0, 10, function(err, users) {
+      //console.log('Resultados con igual IP:');
+      //console.log(err);
+      //console.log(ips);
+      // Obtenemos y guardamos los usuarios que han usado esa ip
+      if(users && users.length > 1)
+      { // solo si hay mas de un usuario con la misma IP 
+        User.getUsersData(users, function(err, usData){
+          var notBanned = 0;
+          var sameUsers = "0";
+          var message = "";
+          for(var i=0;i<usData.length;i++)
+          {
+            if(!usData[i].banned)
+            { // Compruebo el numero de multicuentas activas, pues solo permito 2
+              notBanned++;
+            }
+            sameUsers = sameUsers + "," + usData[i].username;
+          }
+
+          if(notBanned > 2)
+          { // Si tengo mas de dos cuentas con la misma ip y no baneadas
+            // no permito que se registre
+            message = '["'+data.userData.username+'","['+sameUsers+']","'+ip+'","'+Date.now()+'", "NotRegistered"]';
+            db.setAdd('multiaccount', message);
+            callback("ERROR MULTICUENTA", data);
+          }
+          else
+          {
+            message = '["'+data.userData.username+'","['+sameUsers+']","'+multiAccountDetector.ip+'","'+Date.now()+'", null]';
+            db.setAdd('multiaccount', message);
+            callback(null, data);
+          }
+        });
+      }
+    });
+  };
+
   multiAccountDetector.getAuth = function(data)
   {
     //console.log('Data: ');
@@ -90,12 +135,6 @@ var multiAccountDetector = {};
     });
 
     callback(null, custom_header);
-  }
-
-  multiAccountDetector.getRegister = function(regData, callback)
-  {
-    // console.log(regData.req);
-    callback(null, regData);
   }
 
 
